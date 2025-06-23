@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,16 +15,12 @@ import (
 	"google.golang.org/grpc"
 
 	"srv_contact/main/api/router"
+	server "srv_contact/main/internal/grpc"
 	"srv_contact/main/pkg/contact"
 	pb "srv_contact/main/proto/contact"
 )
 
-type server struct {
-	pb.UnimplementedContactServiceServer
-}
-
 func main() {
-	// 1. Koneksi database
 	db, cancel, err := databaseConnection()
 	if err != nil {
 		log.Fatalf("Database Connection Error: %v", err)
@@ -31,12 +28,10 @@ func main() {
 	defer cancel()
 	fmt.Println("Database connection success!")
 
-	// 2. Init repository dan service
 	contactCollection := db.Collection("contacts")
 	contactRepo := contact.NewRepo(contactCollection)
 	contactService := contact.NewService(contactRepo)
 
-	// 3. Jalankan REST API dengan Fiber (port :8080)
 	go func() {
 		app := fiber.New()
 		app.Use(cors.New())
@@ -52,13 +47,12 @@ func main() {
 		}
 	}()
 
-	// 4. Jalankan gRPC server (port :50051)
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
-	pb.RegisterContactServiceServer(grpcServer, &server{})
+	pb.RegisterContactServiceServer(grpcServer, server.NewGRPCServer(contactRepo))
 
 	log.Println("gRPC server running on :50051")
 	if err := grpcServer.Serve(lis); err != nil {
@@ -67,9 +61,10 @@ func main() {
 }
 
 func databaseConnection() (*mongo.Database, context.CancelFunc, error) {
+	uri := os.Getenv("MONGO_URI")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		"mongodb://username:password@localhost:27017/contact").SetServerSelectionTimeout(5*time.
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri).SetServerSelectionTimeout(5*time.
 		Second))
 	if err != nil {
 		cancel()

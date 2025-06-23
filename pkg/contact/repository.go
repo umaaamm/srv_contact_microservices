@@ -17,6 +17,7 @@ type Repository interface {
 	ReadContact() (*[]presenter.Contact, error)
 	UpdateContact(book *entities.Contact) (*entities.Contact, error)
 	DeleteContact(ID string) error
+	FindByID(id string) (*entities.Contact, error)
 }
 
 type repository struct {
@@ -73,4 +74,14 @@ func (r *repository) DeleteContact(ID string) error {
 		return err
 	}
 	return nil
+}
+
+func (r *repository) FindByID(id string) (*entities.Contact, error) {
+	var contact entities.Contact
+	err := r.Collection.FindOne(context.Background(), bson.M{"nohp": id}).Decode(&contact)
+	if err != nil {
+		return nil, err
+	}
+
+	return &contact, nil
 }

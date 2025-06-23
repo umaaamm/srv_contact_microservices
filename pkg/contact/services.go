@@ -21,6 +21,7 @@ func NewService(r Repository) Service {
 		repository: r,
 	}
 }
+
 func (s *service) InsertContact(contact *entities.Contact) (*entities.Contact, error) {
 	return s.repository.CreateContact(contact)
 }

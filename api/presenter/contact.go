@@ -34,7 +34,6 @@ func ContactsSuccessResponse(data *[]Contact) *fiber.Map {
 	}
 }
 
-// BookErrorResponse is the ErrorResponse that will be passed in the response by Handler
 func ContactErrorResponse(err error) *fiber.Map {
 	return &fiber.Map{
 		"status": false,
