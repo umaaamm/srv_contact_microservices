@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package contact;
+
+option go_package = "github.com/umaaamm/srv_contact/proto/contact;contact";
+
+service ContactService {
+  rpc GetContactByID (GetContactRequest) returns (ContactResponse);
+}
+
+message GetContactRequest {
+  string id = 1;
+}
+
+message ContactResponse {
+  string id = 1;
+  string nama = 2;
+  string noHp = 3;
+}
