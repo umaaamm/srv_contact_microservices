@@ -13,51 +13,57 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 
-	pb "github.com/umaaamm/srv_contact/proto/contact"
-
 	"srv_contact/main/api/router"
 	"srv_contact/main/pkg/contact"
+	pb "srv_contact/main/proto/contact"
 )
 
 type server struct {
-	pb.UnimplementedUserServiceServer
+	pb.UnimplementedContactServiceServer
 }
 
 func main() {
-	// gRPC
-	lis, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
-	pb.RegisterUserServiceServer(s, &server{})
-
-	log.Println("UserService gRPC server running on :50051")
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
-
-	// end gRPC
-
+	// 1. Koneksi database
 	db, cancel, err := databaseConnection()
 	if err != nil {
-		log.Fatal("Database Connection Error $s", err)
+		log.Fatalf("Database Connection Error: %v", err)
 	}
+	defer cancel()
 	fmt.Println("Database connection success!")
+
+	// 2. Init repository dan service
 	contactCollection := db.Collection("contacts")
 	contactRepo := contact.NewRepo(contactCollection)
 	contactService := contact.NewService(contactRepo)
 
-	app := fiber.New()
-	app.Use(cors.New())
-	app.Get("/", func(ctx *fiber.Ctx) error {
-		return ctx.Send([]byte("Services Contact API is running"))
-	})
-	api := app.Group("/api")
-	router.ContactRouter(api, contactService)
-	defer cancel()
-	log.Fatal(app.Listen(":8080"))
+	// 3. Jalankan REST API dengan Fiber (port :8080)
+	go func() {
+		app := fiber.New()
+		app.Use(cors.New())
+		app.Get("/", func(ctx *fiber.Ctx) error {
+			return ctx.SendString("Services Contact API is running")
+		})
+		api := app.Group("/api")
+		router.ContactRouter(api, contactService)
 
+		log.Println("REST API running on :8080")
+		if err := app.Listen(":8080"); err != nil {
+			log.Fatalf("Fiber error: %v", err)
+		}
+	}()
+
+	// 4. Jalankan gRPC server (port :50051)
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+	pb.RegisterContactServiceServer(grpcServer, &server{})
+
+	log.Println("gRPC server running on :50051")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve gRPC: %v", err)
+	}
 }
 
 func databaseConnection() (*mongo.Database, context.CancelFunc, error) {
