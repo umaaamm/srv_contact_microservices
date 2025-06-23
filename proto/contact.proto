@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package contact;
 
-option go_package = "github.com/umaaamm/srv_contact/proto/contact;contact";
+option go_package = "github.com/umaaamm/srv_contact_microservices/proto/contact;contact";
 
 service ContactService {
   rpc GetContactByID (GetContactRequest) returns (ContactResponse);

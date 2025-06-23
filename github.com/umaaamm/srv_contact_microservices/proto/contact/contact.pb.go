@@ -137,7 +137,7 @@ const file_proto_contact_proto_rawDesc = "" +
 	"\x04nama\x18\x02 \x01(\tR\x04nama\x12\x12\n" +
 	"\x04noHp\x18\x03 \x01(\tR\x04noHp2X\n" +
 	"\x0eContactService\x12F\n" +
-	"\x0eGetContactByID\x12\x1a.contact.GetContactRequest\x1a\x18.contact.ContactResponseB6Z4github.com/umaaamm/srv_contact/proto/contact;contactb\x06proto3"
+	"\x0eGetContactByID\x12\x1a.contact.GetContactRequest\x1a\x18.contact.ContactResponseBDZBgithub.com/umaaamm/srv_contact_microservices/proto/contact;contactb\x06proto3"
 
 var (
 	file_proto_contact_proto_rawDescOnce sync.Once
